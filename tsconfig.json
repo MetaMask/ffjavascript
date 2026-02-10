@@ -1,0 +1,7 @@
+{
+  "extends": "@toruslabs/config/tsconfig.default.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "allowJs": true
+  }
+}
