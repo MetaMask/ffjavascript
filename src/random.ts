@@ -1,5 +1,5 @@
-export function getRandomBytes(n) {
-  let array = new Uint8Array(n);
+export function getRandomBytes(n: number): Uint8Array {
+  const array = new Uint8Array(n);
   // Browser & Node
   if (typeof globalThis.crypto !== "undefined") {
     // Supported

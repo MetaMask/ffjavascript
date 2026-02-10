@@ -1,7 +1,7 @@
-import toruslabsJavascript from "@toruslabs/eslint-config-javascript";
+import toruslabsTypescript from "@toruslabs/eslint-config-typescript";
 
 export default [
-  ...toruslabsJavascript,
+  ...toruslabsTypescript,
   {
     ignores: ["dist/"],
     rules: {

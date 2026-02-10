@@ -17,14 +17,28 @@
     snarkjs. If not, see <https://www.gnu.org/licenses/>.
 */
 
-import * as Scalar from "./scalar.js";
+import * as Scalar from "./scalar";
 
-export function mulScalar(F, base, e) {
-  let res;
+export interface MulScalarField {
+  zero: bigint;
+  neg(a: bigint): bigint;
+  double(a: bigint): bigint;
+  add(a: bigint, b: bigint): bigint;
+  sub(a: bigint, b: bigint): bigint;
+}
 
+export interface ExpField {
+  one: bigint;
+  square(a: bigint): bigint;
+  mul(a: bigint, b: bigint): bigint;
+}
+
+export function mulScalar(F: MulScalarField, base: bigint, e: bigint | number): bigint {
   if (Scalar.isZero(e)) return F.zero;
 
   const n = Scalar.naf(e);
+
+  let res: bigint;
 
   if (n[n.length - 1] == 1) {
     res = base;
@@ -47,25 +61,7 @@ export function mulScalar(F, base, e) {
   return res;
 }
 
-/*
-exports.mulScalar = (F, base, e) =>{
-    let res = F.zero;
-    let rem = bigInt(e);
-    let exp = base;
-
-    while (! rem.eq(bigInt.zero)) {
-        if (rem.and(bigInt.one).eq(bigInt.one)) {
-            res = F.add(res, exp);
-        }
-        exp = F.double(exp);
-        rem = rem.shiftRight(1);
-    }
-
-    return res;
-};
-*/
-
-export function exp(F, base, e) {
+export function exp(F: ExpField, base: bigint, e: bigint | number): bigint {
   if (Scalar.isZero(e)) return F.one;
 
   const n = Scalar.bits(e);

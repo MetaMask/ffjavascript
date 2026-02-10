@@ -45,7 +45,7 @@
   "devDependencies": {
     "@babel/runtime": "^7.28.6",
     "@toruslabs/config": "^4.0.0",
-    "@toruslabs/eslint-config-javascript": "^5.0.0",
+    "@toruslabs/eslint-config-typescript": "^5.0.0",
     "@toruslabs/torus-scripts": "^8.0.0",
     "@vitest/browser": "^4.0.17",
     "@vitest/browser-playwright": "^4.0.18",
@@ -54,6 +54,7 @@
     "playwright": "^1.58.2",
     "rimraf": "^6.1.2",
     "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.17"
   },
   "publishConfig": {

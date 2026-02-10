@@ -21,7 +21,7 @@ export default defineConfig({
     coverage: {
       reporter: ["text"],
       provider: "istanbul",
-      include: ["src/**/*.js"],
+      include: ["src/**/*.ts"],
     },
   },
 });
