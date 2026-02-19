@@ -1,6 +1,0 @@
-{
-  "extension": ["js", "ts"],
-  "timeout": 0,
-  "exit": true,
-  "node-option": ["import=tsx"]
-}
