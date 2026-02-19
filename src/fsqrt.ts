@@ -131,7 +131,8 @@ function alg9_adj(F: ZqField): void {
 
   F.frobenius = function (n: number, x: bigint): bigint {
     if (n % 2 == 1) {
-      return (F as any).conjugate(x);
+      // @ts-expect-error - conjugate exists on extension fields, not F1
+      return F.conjugate(x);
     } else {
       return x;
     }
@@ -145,7 +146,8 @@ function alg9_adj(F: ZqField): void {
     const x0 = this.mul(a1, a);
     let x: bigint;
     if (this.eq(alfa, this.negone)) {
-      x = this.mul(x0, [(this as any).F.zero, (this as any).F.one]);
+      // @ts-expect-error - F sub-field and array mul exist on extension fields, not F1
+      x = this.mul(x0, [this.F.zero, this.F.one]);
     } else {
       const b = this.pow(this.add(this.one, alfa), this.sqrt_e12!);
       x = this.mul(b, x0);

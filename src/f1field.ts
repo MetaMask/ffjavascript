@@ -299,7 +299,7 @@ export default class ZqField {
   }
 
   normalize(a: bigint | number): bigint {
-    let v = BigInt(a);
+    const v = BigInt(a);
     if (v < 0) {
       let na = -v;
       if (na >= this.p) na = na % this.p;
