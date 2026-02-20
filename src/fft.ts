@@ -24,14 +24,44 @@
     by the array [ p0, p1, p2, ... , pn ].
  */
 
+export interface FFTField {
+  sqrt_t?: bigint;
+  t: bigint;
+  sqrt_s?: number;
+  s: number;
+  one: bigint;
+  half: bigint;
+  eq(a: bigint, b: bigint): boolean;
+  pow(b: bigint, e: bigint | number): bigint;
+  add(a: bigint, b: bigint): bigint;
+  inv(a: bigint): bigint;
+  square(a: bigint): bigint;
+  mul(a: bigint, b: bigint): bigint;
+  mulScalar(base: bigint, s: bigint | number | string): bigint;
+}
+
+export interface FFTGroup {
+  add(a: bigint, b: bigint): bigint;
+  sub(a: bigint, b: bigint): bigint;
+}
+
+export type OpMulGF = (a: bigint, b: bigint) => bigint;
+
 export default class FFT {
-  constructor(G, F, opMulGF) {
+  F: FFTField;
+  G: FFTGroup;
+  opMulGF: OpMulGF;
+  w: bigint[];
+  wi: bigint[];
+  roots: bigint[][];
+
+  constructor(G: FFTGroup, F: FFTField, opMulGF: OpMulGF) {
     this.F = F;
     this.G = G;
     this.opMulGF = opMulGF;
 
-    let rem = F.sqrt_t || F.t;
-    let s = F.sqrt_s || F.s;
+    const rem = F.sqrt_t || F.t;
+    const s = F.sqrt_s ?? F.s;
 
     let nqr = F.one;
     while (F.eq(F.pow(nqr, F.half), F.one)) nqr = F.add(nqr, F.one);
@@ -49,23 +79,10 @@ export default class FFT {
     }
 
     this.roots = [];
-    /*
-        for (let i=0; i<16; i++) {
-            let r = this.F.one;
-            n = 1 << i;
-            const rootsi = new Array(n);
-            for (let j=0; j<n; j++) {
-                rootsi[j] = r;
-                r = this.F.mul(r, this.w[i]);
-            }
-
-            this.roots.push(rootsi);
-        }
-        */
     this._setRoots(Math.min(s, 15));
   }
 
-  _setRoots(n) {
+  _setRoots(n: number): void {
     for (let i = n; i >= 0 && !this.roots[i]; i--) {
       let r = this.F.one;
       const nroots = 1 << i;
@@ -79,7 +96,7 @@ export default class FFT {
     }
   }
 
-  fft(p) {
+  fft(p: bigint[]): bigint[] {
     if (p.length <= 1) return p;
     const bits = log2(p.length - 1) + 1;
     this._setRoots(bits);
@@ -92,7 +109,7 @@ export default class FFT {
     return res;
   }
 
-  ifft(p) {
+  ifft(p: bigint[]): bigint[] {
     if (p.length <= 1) return p;
     const bits = log2(p.length - 1) + 1;
     this._setRoots(bits);
@@ -111,17 +128,17 @@ export default class FFT {
   }
 }
 
-function log2(V) {
+function log2(V: number): number {
   return (
     ((V & 0xffff0000) !== 0 ? ((V &= 0xffff0000), 16) : 0) |
     ((V & 0xff00ff00) !== 0 ? ((V &= 0xff00ff00), 8) : 0) |
     ((V & 0xf0f0f0f0) !== 0 ? ((V &= 0xf0f0f0f0), 4) : 0) |
     ((V & 0xcccccccc) !== 0 ? ((V &= 0xcccccccc), 2) : 0) |
-    ((V & 0xaaaaaaaa) !== 0)
+    ((V & 0xaaaaaaaa) !== 0 ? 1 : 0)
   );
 }
 
-function __fft(PF, pall, bits, offset, step) {
+function __fft(PF: FFT, pall: bigint[], bits: number, offset: number, step: number): bigint[] {
   const n = 1 << bits;
   if (n == 1) {
     return [pall[offset]];

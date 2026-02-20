@@ -1,12 +1,48 @@
-/* global BigInt */
-import FFFT from "./fft.js";
-import buildSqrt from "./fsqrt.js";
-import * as futils from "./futils.js";
-import { getRandomBytes } from "./random.js";
-import * as Scalar from "./scalar.js";
+import FFT from "./fft";
+import buildSqrt from "./fsqrt";
+import * as futils from "./futils";
+import { getRandomBytes } from "./random";
+import * as Scalar from "./scalar";
 
 export default class ZqField {
-  constructor(p) {
+  type: string;
+  one: bigint;
+  zero: bigint;
+  p: bigint;
+  m: number;
+  negone: bigint;
+  two: bigint;
+  half: bigint;
+  bitLength: number;
+  mask: bigint;
+  n64: number;
+  n32: number;
+  n8: number;
+  R: bigint;
+  Ri: bigint;
+  nqr: bigint;
+  s: number;
+  t: bigint;
+  nqr_to_t: bigint;
+  FFT: FFT;
+  w: bigint[];
+  wi: bigint[];
+  shift: bigint;
+  k: bigint;
+
+  // sqrt-related properties (set by buildSqrt)
+  sqrt_q?: bigint;
+  sqrt_s?: number;
+  sqrt_t?: bigint;
+  sqrt_z?: bigint;
+  sqrt_tm1d2?: bigint;
+  sqrt_e1?: bigint;
+  sqrt_e34?: bigint;
+  sqrt_e12?: bigint;
+  sqrt?: (this: ZqField, a: bigint) => bigint | null;
+  frobenius?: (n: number, x: bigint) => bigint;
+
+  constructor(p: bigint | number | string) {
     this.type = "F1";
     this.one = BigInt(1);
     this.zero = BigInt(0);
@@ -44,10 +80,8 @@ export default class ZqField {
 
     buildSqrt(this);
 
-    this.FFT = new FFFT(this, this, this.mul.bind(this));
+    this.FFT = new FFT(this, this, this.mul.bind(this));
 
-    this.fft = this.FFT.fft.bind(this.FFT);
-    this.ifft = this.FFT.ifft.bind(this.FFT);
     this.w = this.FFT.w;
     this.wi = this.FFT.wi;
 
@@ -55,12 +89,14 @@ export default class ZqField {
     this.k = this.exp(this.nqr, 2 ** this.s);
   }
 
-  e(a, b) {
-    let res;
+  e(a: bigint | number | string, b?: number): bigint {
+    let res: bigint;
     if (!b) {
       res = BigInt(a);
     } else if (b == 16) {
       res = BigInt("0x" + a);
+    } else {
+      res = BigInt(a);
     }
     if (res < 0) {
       let nres = -res;
@@ -71,73 +107,73 @@ export default class ZqField {
     }
   }
 
-  add(a, b) {
+  add(a: bigint, b: bigint): bigint {
     const res = a + b;
     return res >= this.p ? res - this.p : res;
   }
 
-  sub(a, b) {
+  sub(a: bigint, b: bigint): bigint {
     return a >= b ? a - b : this.p - b + a;
   }
 
-  neg(a) {
+  neg(a: bigint): bigint {
     return a ? this.p - a : a;
   }
 
-  mul(a, b) {
+  mul(a: bigint, b: bigint): bigint {
     return (a * b) % this.p;
   }
 
-  mulScalar(base, s) {
+  mulScalar(base: bigint, s: bigint | number | string): bigint {
     return (base * this.e(s)) % this.p;
   }
 
-  square(a) {
+  square(a: bigint): bigint {
     return (a * a) % this.p;
   }
 
-  eq(a, b) {
+  eq(a: bigint, b: bigint): boolean {
     return a == b;
   }
 
-  neq(a, b) {
+  neq(a: bigint, b: bigint): boolean {
     return a != b;
   }
 
-  lt(a, b) {
+  lt(a: bigint, b: bigint): boolean {
     const aa = a > this.half ? a - this.p : a;
     const bb = b > this.half ? b - this.p : b;
     return aa < bb;
   }
 
-  gt(a, b) {
+  gt(a: bigint, b: bigint): boolean {
     const aa = a > this.half ? a - this.p : a;
     const bb = b > this.half ? b - this.p : b;
     return aa > bb;
   }
 
-  leq(a, b) {
+  leq(a: bigint, b: bigint): boolean {
     const aa = a > this.half ? a - this.p : a;
     const bb = b > this.half ? b - this.p : b;
     return aa <= bb;
   }
 
-  geq(a, b) {
+  geq(a: bigint, b: bigint): boolean {
     const aa = a > this.half ? a - this.p : a;
     const bb = b > this.half ? b - this.p : b;
     return aa >= bb;
   }
 
-  div(a, b) {
+  div(a: bigint, b: bigint): bigint {
     return this.mul(a, this.inv(b));
   }
 
-  idiv(a, b) {
+  idiv(a: bigint, b: bigint): bigint {
     if (!b) throw new Error("Division by zero");
     return a / b;
   }
 
-  inv(a) {
+  inv(a: bigint): bigint {
     if (!a) throw new Error("Division by zero");
 
     let t = this.zero;
@@ -145,7 +181,7 @@ export default class ZqField {
     let newt = this.one;
     let newr = a % this.p;
     while (newr) {
-      let q = r / newr;
+      const q = r / newr;
       [t, newt] = [newt, t - q * newt];
       [r, newr] = [newr, r - q * newr];
     }
@@ -153,39 +189,39 @@ export default class ZqField {
     return t;
   }
 
-  mod(a, b) {
+  mod(a: bigint, b: bigint): bigint {
     return a % b;
   }
 
-  pow(b, e) {
+  pow(b: bigint, e: bigint | number): bigint {
     return futils.exp(this, b, e);
   }
 
-  exp(b, e) {
+  exp(b: bigint, e: bigint | number): bigint {
     return futils.exp(this, b, e);
   }
 
-  band(a, b) {
+  band(a: bigint, b: bigint): bigint {
     const res = a & b & this.mask;
     return res >= this.p ? res - this.p : res;
   }
 
-  bor(a, b) {
+  bor(a: bigint, b: bigint): bigint {
     const res = (a | b) & this.mask;
     return res >= this.p ? res - this.p : res;
   }
 
-  bxor(a, b) {
+  bxor(a: bigint, b: bigint): bigint {
     const res = (a ^ b) & this.mask;
     return res >= this.p ? res - this.p : res;
   }
 
-  bnot(a) {
+  bnot(a: bigint): bigint {
     const res = a ^ this.mask;
     return res >= this.p ? res - this.p : res;
   }
 
-  shl(a, b) {
+  shl(a: bigint, b: bigint): bigint {
     if (Number(b) < this.bitLength) {
       const res = (a << b) & this.mask;
       return res >= this.p ? res - this.p : res;
@@ -199,7 +235,7 @@ export default class ZqField {
     }
   }
 
-  shr(a, b) {
+  shr(a: bigint, b: bigint): bigint {
     if (Number(b) < this.bitLength) {
       return a >> b;
     } else {
@@ -208,24 +244,24 @@ export default class ZqField {
         const res = (a << nb) & this.mask;
         return res >= this.p ? res - this.p : res;
       } else {
-        return 0;
+        return this.zero;
       }
     }
   }
 
-  land(a, b) {
+  land(a: bigint, b: bigint): bigint {
     return a && b ? this.one : this.zero;
   }
 
-  lor(a, b) {
+  lor(a: bigint, b: bigint): bigint {
     return a || b ? this.one : this.zero;
   }
 
-  lnot(a) {
+  lnot(a: bigint): bigint {
     return a ? this.zero : this.one;
   }
 
-  sqrt_old(n) {
+  sqrt_old(n: bigint): bigint | null {
     if (n == this.zero) return this.zero;
 
     // Test that have solution
@@ -262,18 +298,18 @@ export default class ZqField {
     return r;
   }
 
-  normalize(a, b) {
-    a = BigInt(a, b);
-    if (a < 0) {
-      let na = -a;
+  normalize(a: bigint | number): bigint {
+    const v = BigInt(a);
+    if (v < 0) {
+      let na = -v;
       if (na >= this.p) na = na % this.p;
       return this.p - na;
     } else {
-      return a >= this.p ? a % this.p : a;
+      return v >= this.p ? v % this.p : v;
     }
   }
 
-  random() {
+  random(): bigint {
     const nBytes = (this.bitLength * 2) / 8;
     let res = this.zero;
     for (let i = 0; i < nBytes; i++) {
@@ -282,9 +318,9 @@ export default class ZqField {
     return res % this.p;
   }
 
-  toString(a, base) {
+  toString(a: bigint, base?: number): string {
     base = base || 10;
-    let vs;
+    let vs: string;
     if (a > this.half && base == 10) {
       const v = this.p - a;
       vs = "-" + v.toString(base);
@@ -294,12 +330,12 @@ export default class ZqField {
     return vs;
   }
 
-  isZero(a) {
+  isZero(a: bigint): boolean {
     return a == this.zero;
   }
 
-  fromRng(rng) {
-    let v;
+  fromRng(rng: { nextU64(): bigint }): bigint {
+    let v: bigint;
     do {
       v = this.zero;
       for (let i = 0; i < this.n64; i++) {
@@ -311,52 +347,52 @@ export default class ZqField {
     return v;
   }
 
-  fft(a) {
+  fft(a: bigint[]): bigint[] {
     return this.FFT.fft(a);
   }
 
-  ifft(a) {
+  ifft(a: bigint[]): bigint[] {
     return this.FFT.ifft(a);
   }
 
   // Returns a buffer with Little Endian Representation
-  toRprLE(buff, o, e) {
+  toRprLE(buff: Uint8Array, o: number, e: bigint): void {
     Scalar.toRprLE(buff, o, e, this.n64 * 8);
   }
 
   // Returns a buffer with Big Endian Representation
-  toRprBE(buff, o, e) {
+  toRprBE(buff: Uint8Array, o: number, e: bigint): void {
     Scalar.toRprBE(buff, o, e, this.n64 * 8);
   }
 
   // Returns a buffer with Big Endian Montgomery Representation
-  toRprBEM(buff, o, e) {
+  toRprBEM(buff: Uint8Array, o: number, e: bigint): void {
     return this.toRprBE(buff, o, this.mul(this.R, e));
   }
 
-  toRprLEM(buff, o, e) {
+  toRprLEM(buff: Uint8Array, o: number, e: bigint): void {
     return this.toRprLE(buff, o, this.mul(this.R, e));
   }
 
-  // Pases a buffer with Little Endian Representation
-  fromRprLE(buff, o) {
+  // Parses a buffer with Little Endian Representation
+  fromRprLE(buff: Uint8Array, o: number): bigint {
     return Scalar.fromRprLE(buff, o, this.n8);
   }
 
-  // Pases a buffer with Big Endian Representation
-  fromRprBE(buff, o) {
+  // Parses a buffer with Big Endian Representation
+  fromRprBE(buff: Uint8Array, o: number): bigint {
     return Scalar.fromRprBE(buff, o, this.n8);
   }
 
-  fromRprLEM(buff, o) {
+  fromRprLEM(buff: Uint8Array, o: number): bigint {
     return this.mul(this.fromRprLE(buff, o), this.Ri);
   }
 
-  fromRprBEM(buff, o) {
+  fromRprBEM(buff: Uint8Array, o: number): bigint {
     return this.mul(this.fromRprBE(buff, o), this.Ri);
   }
 
-  toObject(a) {
+  toObject(a: bigint): bigint {
     return a;
   }
 }

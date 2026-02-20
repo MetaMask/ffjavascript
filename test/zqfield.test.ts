@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import ZqField from "../src/f1field.js";
-import * as Scalar from "../src/scalar.js";
+import ZqField from "../src/f1field";
+import * as Scalar from "../src/scalar";
 
-const q = Scalar.fromString("21888242871839275222246405745257275088696311157297823662689037894645226208583");
-const r = Scalar.fromString("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+const q = Scalar.fromString("21888242871839275222246405745257275088696311157297823662689037894645226208583")!;
+const r = Scalar.fromString("21888242871839275222246405745257275088548364400416034343698204186575808495617")!;
 
 describe("F1 testing", () => {
   it("Should compute euclidean", () => {
@@ -27,18 +27,18 @@ describe("F1 testing", () => {
   it("Should compute sqrts", () => {
     const F = new ZqField(q);
     const a = F.e("4");
-    const b = F.sqrt(a);
+    const b = F.sqrt!(a);
 
-    expect(F.eq(F.e(0), F.sqrt(F.e("0")))).toBe(true);
-    expect(F.eq(b, F.e("2"))).toBe(true);
-    expect(F.sqrt(F.nqr)).toBe(null);
+    expect(F.eq(F.e(0), F.sqrt!(F.e("0"))!)).toBe(true);
+    expect(F.eq(b!, F.e("2"))).toBe(true);
+    expect(F.sqrt!(F.nqr)).toBe(null);
   });
 
   it("Should compute sqrt of 100 random numbers", () => {
     const F = new ZqField(r);
     for (let j = 0; j < 100; j++) {
       const a = F.random();
-      const s = F.sqrt(a);
+      const s = F.sqrt!(a);
       if (s != null) {
         expect(F.eq(F.square(s), a)).toBe(true);
       }

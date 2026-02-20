@@ -1,9 +1,9 @@
-import toruslabsJavascript from "@toruslabs/eslint-config-javascript";
+import toruslabsTypescript from "@toruslabs/eslint-config-typescript";
 
 export default [
-  ...toruslabsJavascript,
+  ...toruslabsTypescript,
   {
-    ignores: ["build/"],
+    ignores: ["dist/"],
     rules: {
       "no-redeclare": ["error", { builtinGlobals: false }],
     },
