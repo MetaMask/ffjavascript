@@ -1,6 +1,6 @@
 {
   "name": "@toruslabs/ffjavascript",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Finite Field Library in Javascript",
   "main": "./dist/lib.cjs/index.js",
   "module": "./dist/lib.esm/index.js",
@@ -14,6 +14,7 @@
   "scripts": {
     "start": "torus-scripts start",
     "build": "torus-scripts build",
+    "release": "torus-scripts release",
     "lint": "torus-scripts lint --fix",
     "prepack": "npm run build",
     "test": "npm run test:node && npm run test:browsers",
