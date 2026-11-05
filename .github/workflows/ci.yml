@@ -6,6 +6,9 @@ on:
 
 name: Run Tests
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: run tests
@@ -36,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Check dependency hardening
-        run: npx --no-install harden check --package-manager npm --level moderate
+        run: npm exec -- harden check --package-manager npm --level moderate
 
       - name: Check format, lint, and types
         run: npm run check
@@ -45,10 +48,10 @@ jobs:
         run: npm run typecheck
 
       - name: Install playwright webkit
-        run: npx playwright install-deps webkit
+        run: npm exec -- playwright install-deps webkit
 
       - name: Install browsers
-        run: npx playwright install
+        run: npm exec -- playwright install
 
       - name: Run tests
         run: npm run test
