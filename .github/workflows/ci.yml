@@ -38,6 +38,12 @@ jobs:
       - name: Check dependency hardening
         run: npx --no-install harden check --package-manager npm --level moderate
 
+      - name: Check format, lint, and types
+        run: npm run check
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Install playwright webkit
         run: npx playwright install-deps webkit
 
